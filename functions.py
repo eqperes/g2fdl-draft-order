@@ -4,9 +4,22 @@ import numpy as np
 
 
 def calculate_scores(players_tiers_matrix: ndarray, tiers_nb: int = 9) -> ndarray:
+    return _calculate_scores_for_first_tier(players_tiers_matrix, tiers_nb) + _calculate_scores_every_tier_but_first(players_tiers_matrix, tiers_nb)
+
+
+def _calculate_scores_for_first_tier(players_tiers_matrix: ndarray, tiers_nb: int = 9) -> ndarray:
     mshape = players_tiers_matrix.shape
     players_nb = mshape[1]
-    scores_without_order_multiplier = np.maximum((tiers_nb + 1) * np.ones(mshape) - players_tiers_matrix, np.zeros(mshape))
+    scores_without_order_multiplier = 1.0 * tiers_nb * (players_tiers_matrix == 1)
+    order_multiplier = 3 ** (np.linspace([1] * players_nb, [0] * players_nb, players_nb)) - 1
+    scores = np.sum(scores_without_order_multiplier * order_multiplier, axis=0)
+    return scores
+
+
+def _calculate_scores_every_tier_but_first(players_tiers_matrix: ndarray, tiers_nb: int = 9) -> ndarray:
+    mshape = players_tiers_matrix.shape
+    players_nb = mshape[1]
+    scores_without_order_multiplier = np.maximum((tiers_nb + 1) * np.ones(mshape) - players_tiers_matrix, np.zeros(mshape)) * (players_tiers_matrix != 1)
     order_multiplier = np.linspace([1] * players_nb, [0] * players_nb, players_nb)
     scores = np.sum(scores_without_order_multiplier * order_multiplier, axis=0)
     return scores
@@ -43,6 +56,7 @@ def _build_initial_solution_from_partial_solution(partial_solution: ndarray, pla
                 forbidden_values.append(solution[current_i, current_j])
                 solution = None
     return None
+
 
 def build_initial_solution(players_nb: int) -> ndarray:
     return _build_initial_solution_from_partial_solution(np.zeros((players_nb, players_nb)), players_nb, 0, 0)
